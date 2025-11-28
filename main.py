@@ -19,6 +19,7 @@ from urllib.parse import quote
 async def upload_image(
     file: UploadFile = File(...),
     target_size_mb: float = Form(2.0),
+    min_size_mb: float = Form(0.0),
     x: float = Form(None),
     y: float = Form(None),
     width: float = Form(None),
@@ -29,7 +30,7 @@ async def upload_image(
     if x is not None and y is not None and width is not None and height is not None:
         crop_box = (x, y, width, height)
         
-    processed_image_io = process_image(file, target_size_mb, crop_box, target_ratio)
+    processed_image_io = process_image(file, target_size_mb, crop_box, target_ratio, min_size_mb)
     
     # Handle non-ASCII filenames using RFC 5987
     filename = f"processed_{file.filename.rsplit('.', 1)[0]}.jpg"
