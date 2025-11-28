@@ -142,16 +142,33 @@
                             <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">裁切圖片</h3>
 
                             <!-- Aspect Ratio Buttons -->
-                            <div class="flex justify-center space-x-2 mt-4 mb-2">
-                                <button type="button" onclick="setRatio(16/9)"
-                                    class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary bg-blue-100 border-primary text-primary"
-                                    data-ratio="1.7777">16:9</button>
-                                <button type="button" onclick="setRatio(9/7)"
-                                    class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                                    data-ratio="1.2857">9:7</button>
-                                <button type="button" onclick="setRatio(NaN)"
-                                    class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                                    data-ratio="NaN">自訂</button>
+                            <!-- Aspect Ratio Buttons -->
+                            <div class="flex flex-col items-center space-y-3 mt-4 mb-2">
+                                <div class="flex justify-center space-x-2">
+                                    <button type="button" onclick="setRatio(16/9)"
+                                        class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary bg-blue-100 border-primary text-primary"
+                                        data-ratio="1.7777">16:9</button>
+                                    <button type="button" onclick="setRatio(7/9)"
+                                        class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                        data-ratio="0.7777">7:9</button>
+                                    <button type="button" onclick="setRatio(NaN)"
+                                        class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                        data-ratio="NaN">自由調整</button>
+                                </div>
+
+                                <!-- Custom Ratio Input -->
+                                <div class="flex items-center space-x-2 text-sm">
+                                    <span class="text-gray-500">自訂比例:</span>
+                                    <input type="number" id="custom-w" placeholder="寬"
+                                        class="w-16 px-2 py-1 border border-gray-300 rounded focus:ring-primary focus:border-primary"
+                                        min="1">
+                                    <span class="text-gray-400">:</span>
+                                    <input type="number" id="custom-h" placeholder="高"
+                                        class="w-16 px-2 py-1 border border-gray-300 rounded focus:ring-primary focus:border-primary"
+                                        min="1">
+                                    <button type="button" id="applyCustomRatioBtn"
+                                        class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 border border-gray-300">套用</button>
+                                </div>
                             </div>
 
                             <div class="mt-2 w-full h-96 bg-gray-100 flex items-center justify-center">
@@ -196,6 +213,9 @@
         const cropHeight = document.getElementById('crop-height');
         const targetRatioInput = document.getElementById('target-ratio');
         const ratioBtns = document.querySelectorAll('.ratio-btn');
+        const customWInput = document.getElementById('custom-w');
+        const customHInput = document.getElementById('custom-h');
+        const applyCustomRatioBtn = document.getElementById('applyCustomRatioBtn');
 
         let cropper;
 
@@ -205,9 +225,24 @@
                 cropper.setAspectRatio(ratio);
             }
 
-            let ratioText = "自訂";
-            if (Math.abs(ratio - 16 / 9) < 0.01) ratioText = "16:9";
-            else if (Math.abs(ratio - 9 / 7) < 0.01) ratioText = "9:7";
+            let ratioText = "自由調整";
+            if (!isNaN(ratio)) {
+                if (Math.abs(ratio - 16 / 9) < 0.01) ratioText = "16:9";
+                else if (Math.abs(ratio - 7 / 9) < 0.01) ratioText = "7:9";
+                else {
+                    // Try to format custom ratio nicely if possible, or just show decimal
+                    // For now, if it came from custom inputs, we might want to show that.
+                    // But simpler to just show "自訂" or the value.
+                    // Let's try to show the inputs if they match
+                    const w = parseFloat(customWInput.value);
+                    const h = parseFloat(customHInput.value);
+                    if (w && h && Math.abs(ratio - w / h) < 0.001) {
+                        ratioText = `自訂 (${w}:${h})`;
+                    } else {
+                        ratioText = `自訂 (${ratio.toFixed(2)})`;
+                    }
+                }
+            }
 
             ratioDisplay.textContent = `目前比例: ${ratioText}`;
 
@@ -228,6 +263,16 @@
                 targetRatioInput.value = ratio;
             }
         };
+
+        applyCustomRatioBtn.addEventListener('click', () => {
+            const w = parseFloat(customWInput.value);
+            const h = parseFloat(customHInput.value);
+            if (w > 0 && h > 0) {
+                setRatio(w / h);
+            } else {
+                alert("請輸入有效的寬度和高度");
+            }
+        });
 
         const openCropModal = (imageSrc) => {
             imageToCrop.src = imageSrc;
