@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Sizer - 16:9 & Compression</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4 font-sans text-gray-800">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-primary p-6 text-center">
+            <h1 class="text-3xl font-bold text-white tracking-tight">Image Sizer</h1>
+            <p class="text-indigo-200 mt-2 text-sm">Crop to 16:9 & Compress</p>
+        </div>
+
+        <div class="p-8">
+            <form id="uploadForm" class="space-y-6">
+                <!-- File Input -->
+                <div class="relative group">
+                    <label for="file-upload"
+                        class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-indigo-50 hover:border-primary transition-all duration-300">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <!-- Heroicon: cloud-arrow-up -->
+                            <svg class="w-12 h-12 text-gray-400 group-hover:text-primary mb-3 transition-colors"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                </path>
+                            </svg>
+                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold text-primary">Click to
+                                    upload</span> or drag and drop</p>
+                            <p class="text-xs text-gray-400">PNG, JPG, GIF up to 10MB</p>
+                        </div>
+                        <input id="file-upload" name="file" type="file" class="hidden" accept="image/*" required />
+                    </label>
+                    <div id="file-name" class="mt-2 text-center text-sm text-gray-600 font-medium hidden"></div>
+                </div>
+
+                <!-- Settings -->
+                <div>
+                    <label for="target_size_mb" class="block text-sm font-medium text-gray-700 mb-1">Max File Size
+                        (MB)</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <!-- Heroicon: scale -->
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3">
+                                </path>
+                            </svg>
+                        </div>
+                        <input type="number" name="target_size_mb" id="target_size_mb" value="2.0" step="0.1" min="0.1"
+                            class="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2"
+                            placeholder="2.0">
+                    </div>
+                </div>
+
+                <!-- Hidden Crop Data -->
+                <input type="hidden" name="x" id="crop-x">
+                <input type="hidden" name="y" id="crop-y">
+                <input type="hidden" name="width" id="crop-width">
+                <input type="hidden" name="height" id="crop-height">
+
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:scale-[1.02]">
+                    Process Image
+                </button>
+            </form>
+
+            <!-- Loading State -->
+            <div id="loading" class="hidden mt-6 text-center">
+                <svg class="animate-spin h-8 w-8 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                <p class="mt-2 text-sm text-gray-500">Processing...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error-message" class="hidden mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm text-center"></div>
+        </div>
+    </div>
+
+    <!-- Crop Modal -->
+    <div id="cropModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Crop Image</h3>
+                            <div class="mt-2 w-full h-96 bg-gray-100 flex items-center justify-center">
+                                <img id="image-to-crop" src="" alt="Image to crop" class="max-w-full max-h-full block">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="confirmCropBtn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
+                        Confirm Crop
+                    </button>
+                    <button type="button" id="cancelCropBtn"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-upload');
+        const fileNameDisplay = document.getElementById('file-name');
+        const form = document.getElementById('uploadForm');
+        const loading = document.getElementById('loading');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('error-message');
+
+        // Crop Modal Elements
+        const cropModal = document.getElementById('cropModal');
+        const imageToCrop = document.getElementById('image-to-crop');
+        const confirmCropBtn = document.getElementById('confirmCropBtn');
+        const cancelCropBtn = document.getElementById('cancelCropBtn');
+        const cropX = document.getElementById('crop-x');
+        const cropY = document.getElementById('crop-y');
+        const cropWidth = document.getElementById('crop-width');
+        const cropHeight = document.getElementById('crop-height');
+
+        let cropper;
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileNameDisplay.textContent = `Selected: ${file.name}`;
+                fileNameDisplay.classList.remove('hidden');
+
+                // Show Crop Modal
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageToCrop.src = e.target.result;
+                    cropModal.classList.remove('hidden');
+
+                    // Initialize Cropper
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: 16 / 9,
+                        viewMode: 1,
+                        autoCropArea: 1,
+                    });
+                };
+                reader.readAsDataURL(file);
+            } else {
+                fileNameDisplay.classList.add('hidden');
+            }
+        });
+
+        confirmCropBtn.addEventListener('click', () => {
+            if (cropper) {
+                const data = cropper.getData();
+                cropX.value = data.x;
+                cropY.value = data.y;
+                cropWidth.value = data.width;
+                cropHeight.value = data.height;
+
+                cropModal.classList.add('hidden');
+            }
+        });
+
+        cancelCropBtn.addEventListener('click', () => {
+            cropModal.classList.add('hidden');
+            fileInput.value = ''; // Clear selection
+            fileNameDisplay.classList.add('hidden');
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            loading.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            errorMessage.classList.add('hidden');
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    // Get filename from header or default
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = 'processed_image.jpg';
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/);
+                        if (filenameMatch && filenameMatch.length === 2) {
+                            filename = decodeURIComponent(filenameMatch[1]);
+                        } else {
+                            const filenameMatchSimple = contentDisposition.match(/filename="?([^"]+)"?/);
+                            if (filenameMatchSimple && filenameMatchSimple.length === 2)
+                                filename = filenameMatchSimple[1];
+                        }
+                    }
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = "An error occurred while processing the image.";
+                errorMessage.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+    </script>
+</body>
+
+</html>
