@@ -22,13 +22,14 @@ async def upload_image(
     x: float = Form(None),
     y: float = Form(None),
     width: float = Form(None),
-    height: float = Form(None)
+    height: float = Form(None),
+    target_ratio: float = Form(16/9)
 ):
     crop_box = None
     if x is not None and y is not None and width is not None and height is not None:
         crop_box = (x, y, width, height)
         
-    processed_image_io = process_image(file, target_size_mb, crop_box)
+    processed_image_io = process_image(file, target_size_mb, crop_box, target_ratio)
     
     # Handle non-ASCII filenames using RFC 5987
     filename = f"processed_{file.filename.rsplit('.', 1)[0]}.jpg"

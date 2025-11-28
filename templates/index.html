@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Sizer - 16:9 & Compression</title>
+    <title>圖片裁切壓縮工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -13,7 +13,7 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#4F46E5',
+                        primary: '#2563EB', // Blue-600
                         secondary: '#10B981',
                     }
                 }
@@ -26,8 +26,8 @@
 
     <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
         <div class="bg-primary p-6 text-center">
-            <h1 class="text-3xl font-bold text-white tracking-tight">Image Sizer</h1>
-            <p class="text-indigo-200 mt-2 text-sm">Crop to 16:9 & Compress</p>
+            <h1 class="text-3xl font-bold text-white tracking-tight">圖片裁切壓縮工具</h1>
+            <p class="text-blue-100 mt-2 text-sm">自動裁切與智慧壓縮</p>
         </div>
 
         <div class="p-8">
@@ -35,7 +35,7 @@
                 <!-- File Input -->
                 <div class="relative group">
                     <label for="file-upload"
-                        class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-indigo-50 hover:border-primary transition-all duration-300">
+                        class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-primary transition-all duration-300">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
                             <!-- Heroicon: cloud-arrow-up -->
                             <svg class="w-12 h-12 text-gray-400 group-hover:text-primary mb-3 transition-colors"
@@ -45,9 +45,9 @@
                                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
                                 </path>
                             </svg>
-                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold text-primary">Click to
-                                    upload</span> or drag and drop</p>
-                            <p class="text-xs text-gray-400">PNG, JPG, GIF up to 10MB</p>
+                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold text-primary">點擊上傳</span>
+                                或拖放檔案</p>
+                            <p class="text-xs text-gray-400">支援 PNG, JPG, GIF (最大 10MB)</p>
                         </div>
                         <input id="file-upload" name="file" type="file" class="hidden" accept="image/*" required />
                     </label>
@@ -56,8 +56,7 @@
 
                 <!-- Settings -->
                 <div>
-                    <label for="target_size_mb" class="block text-sm font-medium text-gray-700 mb-1">Max File Size
-                        (MB)</label>
+                    <label for="target_size_mb" class="block text-sm font-medium text-gray-700 mb-1">最大檔案大小 (MB)</label>
                     <div class="relative rounded-md shadow-sm">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <!-- Heroicon: scale -->
@@ -79,11 +78,12 @@
                 <input type="hidden" name="y" id="crop-y">
                 <input type="hidden" name="width" id="crop-width">
                 <input type="hidden" name="height" id="crop-height">
+                <input type="hidden" name="target_ratio" id="target-ratio" value="1.7777">
 
                 <!-- Submit Button -->
                 <button type="submit" id="submitBtn"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:scale-[1.02]">
-                    Process Image
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:scale-[1.02]">
+                    開始處理
                 </button>
             </form>
 
@@ -96,7 +96,7 @@
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                     </path>
                 </svg>
-                <p class="mt-2 text-sm text-gray-500">Processing...</p>
+                <p class="mt-2 text-sm text-gray-500">處理中...</p>
             </div>
 
             <!-- Error Message -->
@@ -115,7 +115,21 @@
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Crop Image</h3>
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">裁切圖片</h3>
+
+                            <!-- Aspect Ratio Buttons -->
+                            <div class="flex justify-center space-x-2 mt-4 mb-2">
+                                <button type="button" onclick="setRatio(16/9)"
+                                    class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary bg-blue-100 border-primary text-primary"
+                                    data-ratio="1.7777">16:9</button>
+                                <button type="button" onclick="setRatio(9/7)"
+                                    class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                    data-ratio="1.2857">9:7</button>
+                                <button type="button" onclick="setRatio(NaN)"
+                                    class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                    data-ratio="NaN">自訂</button>
+                            </div>
+
                             <div class="mt-2 w-full h-96 bg-gray-100 flex items-center justify-center">
                                 <img id="image-to-crop" src="" alt="Image to crop" class="max-w-full max-h-full block">
                             </div>
@@ -124,12 +138,12 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="button" id="confirmCropBtn"
-                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
-                        Confirm Crop
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
+                        確認裁切
                     </button>
                     <button type="button" id="cancelCropBtn"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Cancel
+                        取消
                     </button>
                 </div>
             </div>
@@ -153,13 +167,38 @@
         const cropY = document.getElementById('crop-y');
         const cropWidth = document.getElementById('crop-width');
         const cropHeight = document.getElementById('crop-height');
+        const targetRatioInput = document.getElementById('target-ratio');
+        const ratioBtns = document.querySelectorAll('.ratio-btn');
 
         let cropper;
+
+        // Function to set aspect ratio
+        window.setRatio = function (ratio) {
+            if (cropper) {
+                cropper.setAspectRatio(ratio);
+            }
+            // Update button styles
+            ratioBtns.forEach(btn => {
+                const btnRatio = parseFloat(btn.dataset.ratio);
+                const isSelected = (isNaN(btnRatio) && isNaN(ratio)) || (Math.abs(btnRatio - ratio) < 0.01);
+
+                if (isSelected) {
+                    btn.classList.add('bg-blue-100', 'border-primary', 'text-primary');
+                } else {
+                    btn.classList.remove('bg-blue-100', 'border-primary', 'text-primary');
+                }
+            });
+
+            // Update hidden input for backend fallback (if needed)
+            if (!isNaN(ratio)) {
+                targetRatioInput.value = ratio;
+            }
+        };
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                fileNameDisplay.textContent = `Selected: ${file.name}`;
+                fileNameDisplay.textContent = `已選擇: ${file.name}`;
                 fileNameDisplay.classList.remove('hidden');
 
                 // Show Crop Modal
@@ -168,7 +207,7 @@
                     imageToCrop.src = e.target.result;
                     cropModal.classList.remove('hidden');
 
-                    // Initialize Cropper
+                    // Initialize Cropper with default 16:9
                     if (cropper) {
                         cropper.destroy();
                     }
@@ -177,6 +216,8 @@
                         viewMode: 1,
                         autoCropArea: 1,
                     });
+                    // Reset buttons to 16:9
+                    setRatio(16 / 9);
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -253,7 +294,7 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                errorMessage.textContent = "An error occurred while processing the image.";
+                errorMessage.textContent = "處理圖片時發生錯誤。";
                 errorMessage.classList.remove('hidden');
             } finally {
                 loading.classList.add('hidden');

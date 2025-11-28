@@ -2,10 +2,10 @@ from PIL import Image
 import io
 from fastapi import UploadFile
 
-def process_image(file: UploadFile, target_size_mb: float = 2.0, crop_box: tuple = None) -> io.BytesIO:
+def process_image(file: UploadFile, target_size_mb: float = 2.0, crop_box: tuple = None, target_ratio: float = 16/9) -> io.BytesIO:
     """
     Process the uploaded image:
-    1. Crop to 16:9 aspect ratio (using crop_box if provided, else center crop).
+    1. Crop to target_ratio (using crop_box if provided, else center crop).
     2. Resize/Compress to be under target_size_mb.
     """
     image = Image.open(file.file)
@@ -21,9 +21,8 @@ def process_image(file: UploadFile, target_size_mb: float = 2.0, crop_box: tuple
         x, y, w, h = crop_box
         image = image.crop((x, y, x + w, y + h))
     else:
-        # Auto 16:9 Center Crop
+        # Auto Center Crop based on target_ratio
         width, height = image.size
-        target_ratio = 16 / 9
         current_ratio = width / height
 
         if current_ratio > target_ratio:
