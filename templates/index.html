@@ -49,11 +49,15 @@
                                 或拖放檔案</p>
                             <p class="text-xs text-gray-400">支援 PNG, JPG, GIF (最大 10MB)</p>
                         </div>
-                        <input id="file-upload" name="file" type="file" class="hidden" accept="image/*" required />
+                        <input id="file-upload" name="file" type="file" class="hidden" accept="image/*" required
+                            onclick="this.value = null" />
                     </label>
                     <div id="file-name" class="mt-2 text-center text-sm text-gray-600 font-medium hidden"></div>
-                    <div id="ratio-display" class="mt-1 text-center text-xs text-primary font-semibold hidden">目前比例:
-                        16:9</div>
+                    <div class="flex justify-center items-center space-x-2 mt-1 hidden" id="ratio-container">
+                        <div id="ratio-display" class="text-xs text-primary font-semibold">目前比例: 16:9</div>
+                        <button type="button" id="reCropBtn"
+                            class="text-xs text-gray-500 underline hover:text-primary">重新裁切</button>
+                    </div>
                 </div>
 
                 <!-- Settings -->
@@ -174,6 +178,8 @@
         const fileInput = document.getElementById('file-upload');
         const fileNameDisplay = document.getElementById('file-name');
         const ratioDisplay = document.getElementById('ratio-display');
+        const ratioContainer = document.getElementById('ratio-container');
+        const reCropBtn = document.getElementById('reCropBtn');
         const form = document.getElementById('uploadForm');
         const loading = document.getElementById('loading');
         const submitBtn = document.getElementById('submitBtn');
@@ -223,35 +229,49 @@
             }
         };
 
+        const openCropModal = (imageSrc) => {
+            imageToCrop.src = imageSrc;
+            cropModal.classList.remove('hidden');
+
+            // Initialize Cropper with default 16:9
+            if (cropper) {
+                cropper.destroy();
+            }
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: 16 / 9,
+                viewMode: 1,
+                autoCropArea: 1,
+            });
+            // Reset buttons to 16:9
+            setRatio(16 / 9);
+        };
+
+        let currentFileSrc = null;
+
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 fileNameDisplay.textContent = `已選擇: ${file.name}`;
                 fileNameDisplay.classList.remove('hidden');
-                ratioDisplay.classList.remove('hidden');
+                ratioContainer.classList.remove('hidden');
 
                 // Show Crop Modal
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    imageToCrop.src = e.target.result;
-                    cropModal.classList.remove('hidden');
-
-                    // Initialize Cropper with default 16:9
-                    if (cropper) {
-                        cropper.destroy();
-                    }
-                    cropper = new Cropper(imageToCrop, {
-                        aspectRatio: 16 / 9,
-                        viewMode: 1,
-                        autoCropArea: 1,
-                    });
-                    // Reset buttons to 16:9
-                    setRatio(16 / 9);
+                    currentFileSrc = e.target.result;
+                    openCropModal(currentFileSrc);
                 };
                 reader.readAsDataURL(file);
             } else {
                 fileNameDisplay.classList.add('hidden');
-                ratioDisplay.classList.add('hidden');
+                ratioContainer.classList.add('hidden');
+                currentFileSrc = null;
+            }
+        });
+
+        reCropBtn.addEventListener('click', () => {
+            if (currentFileSrc) {
+                openCropModal(currentFileSrc);
             }
         });
 
