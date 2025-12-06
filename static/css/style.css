@@ -1,0 +1,96 @@
+/**
+ * Image Sizer - 自訂樣式
+ */
+
+/* ============ 基礎樣式 ============ */
+:root {
+    --color-primary: #2563EB;
+    --color-secondary: #10B981;
+    --color-error: #EF4444;
+    --transition-default: all 0.3s ease;
+}
+
+/* ============ 動畫效果 ============ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ============ 元件樣式 ============ */
+/* 檔案上傳區域 */
+.upload-area {
+    transition: var(--transition-default);
+}
+
+.upload-area:hover {
+    border-color: var(--color-primary);
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+.upload-area:focus-within {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* 錯誤訊息動畫 */
+#error-message:not(.hidden) {
+    animation: fadeIn 0.3s ease;
+}
+
+/* 載入動畫 */
+#loading:not(.hidden) {
+    animation: fadeIn 0.2s ease;
+}
+
+/* ============ 無障礙樣式 ============ */
+/* Focus 可見性 */
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* 跳過連結 (螢幕閱讀器) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ============ Modal 樣式 ============ */
+#cropModal {
+    transition: var(--transition-default);
+}
+
+#cropModal:not(.hidden) {
+    animation: fadeIn 0.2s ease;
+}
+
+/* ============ 響應式調整 ============ */
+@media (max-width: 640px) {
+    .ratio-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+    }
+}

@@ -1,5 +1,16 @@
-fastapi
-uvicorn
-python-multipart
-jinja2
-pillow
+# Web Framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# Template Engine
+jinja2==3.1.4
+
+# File Upload
+python-multipart==0.0.20
+
+# Image Processing
+pillow==11.0.0
+
+# Configuration
+pydantic-settings==2.7.0
+python-dotenv==1.0.1

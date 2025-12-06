@@ -4,16 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="圖片裁切壓縮工具 - 自動裁切與智慧壓縮您的圖片">
     <title>圖片裁切壓縮工具</title>
+
+    <!-- 樣式 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+
+    <!-- Cropper.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <!-- Tailwind 配置 -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#2563EB', // Blue-600
+                        primary: '#2563EB',
                         secondary: '#10B981',
                     }
                 }
@@ -23,68 +31,83 @@
 </head>
 
 <body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4 font-sans text-gray-800">
+    <!-- 跳過連結 (無障礙) -->
+    <a href="#main-form"
+        class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded">
+        跳至主要內容
+    </a>
 
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div class="bg-primary p-6 text-center">
+    <main class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden" role="main">
+        <!-- 標題區 -->
+        <header class="bg-primary p-6 text-center">
             <h1 class="text-3xl font-bold text-white tracking-tight">圖片裁切壓縮工具</h1>
             <p class="text-blue-100 mt-2 text-sm">自動裁切與智慧壓縮</p>
-        </div>
+        </header>
 
         <div class="p-8">
-            <form id="uploadForm" class="space-y-6">
-                <!-- File Input -->
+            <form id="uploadForm" class="space-y-6" aria-label="圖片上傳表單">
+                <!-- 檔案上傳區 -->
                 <div class="relative group">
                     <label for="file-upload"
-                        class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-primary transition-all duration-300">
+                        class="upload-area flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-primary transition-all duration-300"
+                        aria-describedby="file-upload-description">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                            <!-- Heroicon: cloud-arrow-up -->
+                            <!-- 上傳圖示 -->
                             <svg class="w-12 h-12 text-gray-400 group-hover:text-primary mb-3 transition-colors"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+                                aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
                                 </path>
                             </svg>
-                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold text-primary">點擊上傳</span>
-                                或拖放檔案</p>
-                            <p class="text-xs text-gray-400">支援 PNG, JPG, GIF (最大 10MB)</p>
+                            <p class="mb-2 text-sm text-gray-500">
+                                <span class="font-semibold text-primary">點擊上傳</span>或拖放檔案
+                            </p>
+                            <p id="file-upload-description" class="text-xs text-gray-400">支援 PNG, JPG, GIF (最大 10MB)</p>
                         </div>
                         <input id="file-upload" name="file" type="file" class="hidden" accept="image/*" required
-                            onclick="this.value = null" />
+                            onclick="this.value = null" aria-describedby="file-upload-description" />
                     </label>
-                    <div id="file-name" class="mt-2 text-center text-sm text-gray-600 font-medium hidden"></div>
+                    <div id="file-name" class="mt-2 text-center text-sm text-gray-600 font-medium hidden"
+                        aria-live="polite"></div>
                     <div class="flex justify-center items-center space-x-2 mt-1 hidden" id="ratio-container">
-                        <div id="ratio-display" class="text-xs text-primary font-semibold">目前比例: 16:9</div>
+                        <div id="ratio-display" class="text-xs text-primary font-semibold" aria-live="polite">目前比例: 16:9
+                        </div>
                         <button type="button" id="reCropBtn"
-                            class="text-xs text-gray-500 underline hover:text-primary">重新裁切</button>
+                            class="text-xs text-gray-500 underline hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+                            aria-label="重新選擇裁切區域">重新裁切</button>
                     </div>
                 </div>
 
-                <!-- Settings -->
-                <div class="grid grid-cols-2 gap-4">
+                <!-- 大小設定 -->
+                <fieldset class="grid grid-cols-2 gap-4">
+                    <legend class="sr-only">檔案大小設定</legend>
                     <div>
-                        <label for="min_size_mb" class="block text-sm font-medium text-gray-700 mb-1">最小檔案大小
-                            (MB)</label>
+                        <label for="min_size_mb" class="block text-sm font-medium text-gray-700 mb-1">
+                            最小檔案大小 (MB)
+                        </label>
                         <div class="relative rounded-md shadow-sm">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg">
+                                    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
                                 </svg>
                             </div>
                             <input type="number" name="min_size_mb" id="min_size_mb" value="0.0" step="0.1" min="0"
                                 class="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2"
-                                placeholder="0.0">
+                                placeholder="0.0" aria-describedby="min-size-hint">
                         </div>
+                        <p id="min-size-hint" class="sr-only">設定輸出圖片的最小檔案大小</p>
                     </div>
                     <div>
-                        <label for="target_size_mb" class="block text-sm font-medium text-gray-700 mb-1">最大檔案大小
-                            (MB)</label>
+                        <label for="target_size_mb" class="block text-sm font-medium text-gray-700 mb-1">
+                            最大檔案大小 (MB)
+                        </label>
                         <div class="relative rounded-md shadow-sm">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg">
+                                    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
                                 </svg>
@@ -92,29 +115,31 @@
                             <input type="number" name="target_size_mb" id="target_size_mb" value="2.0" step="0.1"
                                 min="0.1"
                                 class="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2"
-                                placeholder="2.0">
+                                placeholder="2.0" aria-describedby="max-size-hint">
                         </div>
+                        <p id="max-size-hint" class="sr-only">設定輸出圖片的最大檔案大小</p>
                     </div>
-                </div>
+                </fieldset>
 
-                <!-- Hidden Crop Data -->
+                <!-- 隱藏裁切資料 -->
                 <input type="hidden" name="x" id="crop-x">
                 <input type="hidden" name="y" id="crop-y">
                 <input type="hidden" name="width" id="crop-width">
                 <input type="hidden" name="height" id="crop-height">
                 <input type="hidden" name="target_ratio" id="target-ratio" value="1.7777">
 
-                <!-- Submit Button -->
+                <!-- 提交按鈕 -->
                 <button type="submit" id="submitBtn"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:scale-[1.02]">
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:scale-[1.02]"
+                    aria-busy="false">
                     開始處理
                 </button>
             </form>
 
-            <!-- Loading State -->
-            <div id="loading" class="hidden mt-6 text-center">
+            <!-- 載入狀態 -->
+            <div id="loading" class="hidden mt-6 text-center" role="status" aria-live="polite">
                 <svg class="animate-spin h-8 w-8 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 24 24">
+                    viewBox="0 0 24 24" aria-hidden="true">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor"
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
@@ -123,56 +148,56 @@
                 <p class="mt-2 text-sm text-gray-500">處理中...</p>
             </div>
 
-            <!-- Error Message -->
-            <div id="error-message" class="hidden mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm text-center"></div>
+            <!-- 錯誤訊息 -->
+            <div id="error-message" class="hidden mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm text-center"
+                role="alert" aria-live="assertive"></div>
         </div>
-    </div>
+    </main>
 
-    <!-- Crop Modal -->
+    <!-- 裁切 Modal -->
     <div id="cropModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
         aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div
-                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                role="document">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">裁切圖片</h3>
+                            <h2 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">裁切圖片</h2>
 
-                            <!-- Aspect Ratio Buttons -->
-                            <!-- Aspect Ratio Buttons -->
+                            <!-- 比例按鈕 -->
                             <div class="flex flex-col items-center space-y-3 mt-4 mb-2">
-                                <div class="flex justify-center space-x-2">
+                                <div class="flex justify-center space-x-2" role="group" aria-label="預設比例選項">
                                     <button type="button" onclick="setRatio(16/9)"
                                         class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary bg-blue-100 border-primary text-primary"
-                                        data-ratio="1.7777">16:9</button>
+                                        data-ratio="1.7777" aria-pressed="true">16:9</button>
                                     <button type="button" onclick="setRatio(7/9)"
                                         class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                                        data-ratio="0.7777">7:9</button>
+                                        data-ratio="0.7777" aria-pressed="false">7:9</button>
                                     <button type="button" onclick="setRatio(NaN)"
                                         class="ratio-btn px-3 py-1 text-sm rounded-full border border-gray-300 hover:bg-blue-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                                        data-ratio="NaN">自由調整</button>
+                                        data-ratio="NaN" aria-pressed="false">自由調整</button>
                                 </div>
 
-                                <!-- Custom Ratio Input -->
+                                <!-- 自訂比例 -->
                                 <div class="flex items-center space-x-2 text-sm">
                                     <span class="text-gray-500">自訂比例:</span>
                                     <input type="number" id="custom-w" placeholder="寬"
                                         class="w-16 px-2 py-1 border border-gray-300 rounded focus:ring-primary focus:border-primary"
-                                        min="1">
-                                    <span class="text-gray-400">:</span>
+                                        min="1" aria-label="自訂寬度">
+                                    <span class="text-gray-400" aria-hidden="true">:</span>
                                     <input type="number" id="custom-h" placeholder="高"
                                         class="w-16 px-2 py-1 border border-gray-300 rounded focus:ring-primary focus:border-primary"
-                                        min="1">
+                                        min="1" aria-label="自訂高度">
                                     <button type="button" id="applyCustomRatioBtn"
-                                        class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 border border-gray-300">套用</button>
+                                        class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary">套用</button>
                                 </div>
                             </div>
 
                             <div class="mt-2 w-full h-96 bg-gray-100 flex items-center justify-center">
-                                <img id="image-to-crop" src="" alt="Image to crop" class="max-w-full max-h-full block">
+                                <img id="image-to-crop" src="" alt="裁切預覽圖片" class="max-w-full max-h-full block">
                             </div>
                         </div>
                     </div>
@@ -183,7 +208,7 @@
                         確認裁切
                     </button>
                     <button type="button" id="cancelCropBtn"
-                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         取消
                     </button>
                 </div>
@@ -191,223 +216,8 @@
         </div>
     </div>
 
-    <script>
-        const fileInput = document.getElementById('file-upload');
-        const fileNameDisplay = document.getElementById('file-name');
-        const ratioDisplay = document.getElementById('ratio-display');
-        const ratioContainer = document.getElementById('ratio-container');
-        const reCropBtn = document.getElementById('reCropBtn');
-        const form = document.getElementById('uploadForm');
-        const loading = document.getElementById('loading');
-        const submitBtn = document.getElementById('submitBtn');
-        const errorMessage = document.getElementById('error-message');
-
-        // Crop Modal Elements
-        const cropModal = document.getElementById('cropModal');
-        const imageToCrop = document.getElementById('image-to-crop');
-        const confirmCropBtn = document.getElementById('confirmCropBtn');
-        const cancelCropBtn = document.getElementById('cancelCropBtn');
-        const cropX = document.getElementById('crop-x');
-        const cropY = document.getElementById('crop-y');
-        const cropWidth = document.getElementById('crop-width');
-        const cropHeight = document.getElementById('crop-height');
-        const targetRatioInput = document.getElementById('target-ratio');
-        const ratioBtns = document.querySelectorAll('.ratio-btn');
-        const customWInput = document.getElementById('custom-w');
-        const customHInput = document.getElementById('custom-h');
-        const applyCustomRatioBtn = document.getElementById('applyCustomRatioBtn');
-
-        let cropper;
-
-        // Function to set aspect ratio
-        window.setRatio = function (ratio) {
-            if (cropper) {
-                cropper.setAspectRatio(ratio);
-            }
-
-            let ratioText = "自由調整";
-            if (!isNaN(ratio)) {
-                if (Math.abs(ratio - 16 / 9) < 0.01) ratioText = "16:9";
-                else if (Math.abs(ratio - 7 / 9) < 0.01) ratioText = "7:9";
-                else {
-                    // Try to format custom ratio nicely if possible, or just show decimal
-                    // For now, if it came from custom inputs, we might want to show that.
-                    // But simpler to just show "自訂" or the value.
-                    // Let's try to show the inputs if they match
-                    const w = parseFloat(customWInput.value);
-                    const h = parseFloat(customHInput.value);
-                    if (w && h && Math.abs(ratio - w / h) < 0.001) {
-                        ratioText = `自訂 (${w}:${h})`;
-                    } else {
-                        ratioText = `自訂 (${ratio.toFixed(2)})`;
-                    }
-                }
-            }
-
-            ratioDisplay.textContent = `目前比例: ${ratioText}`;
-
-            // Update button styles
-            ratioBtns.forEach(btn => {
-                const btnRatio = parseFloat(btn.dataset.ratio);
-                const isSelected = (isNaN(btnRatio) && isNaN(ratio)) || (Math.abs(btnRatio - ratio) < 0.01);
-
-                if (isSelected) {
-                    btn.classList.add('bg-blue-100', 'border-primary', 'text-primary');
-                } else {
-                    btn.classList.remove('bg-blue-100', 'border-primary', 'text-primary');
-                }
-            });
-
-            // Update hidden input for backend fallback (if needed)
-            if (!isNaN(ratio)) {
-                targetRatioInput.value = ratio;
-            }
-        };
-
-        applyCustomRatioBtn.addEventListener('click', () => {
-            const w = parseFloat(customWInput.value);
-            const h = parseFloat(customHInput.value);
-            if (w > 0 && h > 0) {
-                setRatio(w / h);
-            } else {
-                alert("請輸入有效的寬度和高度");
-            }
-        });
-
-        const openCropModal = (imageSrc) => {
-            imageToCrop.src = imageSrc;
-            cropModal.classList.remove('hidden');
-
-            // Initialize Cropper with default 16:9
-            if (cropper) {
-                cropper.destroy();
-            }
-            cropper = new Cropper(imageToCrop, {
-                aspectRatio: 16 / 9,
-                viewMode: 1,
-                autoCropArea: 1,
-            });
-            // Reset buttons to 16:9
-            setRatio(16 / 9);
-        };
-
-        let currentFileSrc = null;
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                fileNameDisplay.textContent = `已選擇: ${file.name}`;
-                fileNameDisplay.classList.remove('hidden');
-                ratioContainer.classList.remove('hidden');
-
-                // Show Crop Modal
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    currentFileSrc = e.target.result;
-                    openCropModal(currentFileSrc);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                fileNameDisplay.classList.add('hidden');
-                ratioContainer.classList.add('hidden');
-                currentFileSrc = null;
-            }
-        });
-
-        reCropBtn.addEventListener('click', () => {
-            if (currentFileSrc) {
-                openCropModal(currentFileSrc);
-            }
-        });
-
-        confirmCropBtn.addEventListener('click', () => {
-            if (cropper) {
-                const data = cropper.getData();
-                cropX.value = data.x;
-                cropY.value = data.y;
-                cropWidth.value = data.width;
-                cropHeight.value = data.height;
-
-                cropModal.classList.add('hidden');
-            }
-        });
-
-        cancelCropBtn.addEventListener('click', () => {
-            cropModal.classList.add('hidden');
-            fileInput.value = ''; // Clear selection
-            fileNameDisplay.classList.add('hidden');
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
-        });
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const file = fileInput.files[0];
-            if (!file) return;
-
-            // Validate Min < Max
-            const minSize = parseFloat(document.getElementById('min_size_mb').value);
-            const maxSize = parseFloat(document.getElementById('target_size_mb').value);
-
-            if (minSize >= maxSize) {
-                errorMessage.textContent = "最小檔案大小必須小於最大檔案大小。";
-                errorMessage.classList.remove('hidden');
-                return;
-            }
-
-            loading.classList.remove('hidden');
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            errorMessage.classList.add('hidden');
-
-            const formData = new FormData(form);
-
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    // Get filename from header or default
-                    const contentDisposition = response.headers.get('Content-Disposition');
-                    let filename = 'processed_image.jpg';
-                    if (contentDisposition) {
-                        const filenameMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/);
-                        if (filenameMatch && filenameMatch.length === 2) {
-                            filename = decodeURIComponent(filenameMatch[1]);
-                        } else {
-                            const filenameMatchSimple = contentDisposition.match(/filename="?([^"]+)"?/);
-                            if (filenameMatchSimple && filenameMatchSimple.length === 2)
-                                filename = filenameMatchSimple[1];
-                        }
-                    }
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
-                } else {
-                    throw new Error('Upload failed');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                errorMessage.textContent = "處理圖片時發生錯誤。";
-                errorMessage.classList.remove('hidden');
-            } finally {
-                loading.classList.add('hidden');
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        });
-    </script>
+    <!-- 主程式 -->
+    <script src="/static/js/main.js"></script>
 </body>
 
 </html>
